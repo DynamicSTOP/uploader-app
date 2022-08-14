@@ -1,0 +1,64 @@
+Resources:
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref DomainName
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - '*'
+            AllowedMethods:
+              - 'PUT'
+              - 'GET'
+            AllowedOrigins:
+              - '*'
+            ExposedHeaders:
+              - 'ETag'
+      LifecycleConfiguration:
+        Rules:
+          - Id: delete-incomplete-mpu-2days
+            Prefix: ''
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 2
+            Status: Enabled
+          - Id: Temp14
+            Prefix: uploads/temp14/
+            Status: Enabled
+            ExpirationInDays: 14
+
+
+      Tags:
+        - Key: "DomainName"
+          Value: !Ref DomainName
+
+  BucketPolicy:
+    Type: 'AWS::S3::BucketPolicy'
+    DependsOn: Bucket
+    Properties:
+      Bucket: !Ref DomainName
+      "PolicyDocument":
+        "Version": "2008-10-17"
+        "Id": "PolicyForCFAccess"
+        "Statement":
+          - "Sid": "wwwFolder"
+            "Action":
+              - "s3:GetObject"
+            "Effect": "Allow"
+            "Resource": !Sub 'arn:aws:s3:::${DomainName}/www/*'
+            "Principal":
+              "AWS": !Sub 'arn:aws:iam::cloudfront:user/CloudFront Origin Access Identity ${OAI}'
+
+Parameters:
+  DomainName:
+    Default: my-domain-name.com
+    Type: String
+    MinLength: 3
+    MaxLength: 32
+    AllowedPattern: "[a-z][-a-z0-9.]*"
+
+  OAI:
+    Description: Origin Access Identity ID. Allows CloidFront to read files. Go to CF in webconsole and it should be under security section.
+    Type: String
+    MinLength: 3
+    MaxLength: 32
+    AllowedPattern: "[A-Z0-9]*"

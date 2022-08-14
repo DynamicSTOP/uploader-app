@@ -13,9 +13,12 @@ ___
 ### 1. AWS CloudFormation stacks
 
 - [ ] AWS S3 stack
-- [ ] AWS CloudFront stack
-- [ ] AWS API Gateway stack
+  - [x] Delete incomplete uploads
+  - [x] delete "temp" files
+  - [ ] move to infrequent after 30 days 
+- [x] AWS CloudFront stack
 - [ ] AWS DynamoDB stack
+- [ ] AWS API Gateway stack
 - [ ] AWS Lambda stack
 
 ___

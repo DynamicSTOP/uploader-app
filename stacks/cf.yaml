@@ -1,0 +1,73 @@
+Resources:
+  CFDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Comment: !Sub '${DomainName}'
+        DefaultCacheBehavior:
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          # https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html
+          # Managed-CachingOptimized
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
+          Compress: true
+          SmoothStreaming: false
+          TargetOriginId: !Sub 'S3-${DomainName}'
+          ViewerProtocolPolicy: 'redirect-to-https'
+
+        DefaultRootObject: 'index.html'
+        Enabled: true
+        HttpVersion: 'http2'
+        IPV6Enabled: true
+        Logging:
+          Bucket: !Sub '${LogBucket}.s3.amazonaws.com'
+          IncludeCookies: false
+          Prefix: !Sub '${DomainName}/cloudfront/'
+        Origins:
+          - ConnectionAttempts: 3
+            ConnectionTimeout: 10
+            DomainName: !Sub '${DomainName}.s3.amazonaws.com'
+            Id: !Sub 'S3-${DomainName}'
+            OriginPath: !Sub '/www/${DomainName}'
+            S3OriginConfig:
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${OAI}'
+        PriceClass: 'PriceClass_All'
+        ViewerCertificate:
+          AcmCertificateArn: !Sub 'arn:aws:acm:us-east-1:${AWS::AccountId}:certificate/${CertificateID}'
+          MinimumProtocolVersion: 'TLSv1.2_2019'
+          SslSupportMethod: 'sni-only'
+
+      Tags:
+        - Key: 'DomainName'
+          Value: !Ref DomainName
+
+Parameters:
+  DomainName:
+    Default: my-domain-name.com
+    Type: String
+    MinLength: 3
+    MaxLength: 32
+    AllowedPattern: "[a-z][a-z0-9.-]*"
+  LogBucket:
+    Default: log-bucket-name
+    Description: Bucket for storing logs
+    Type: String
+    MinLength: 3
+    MaxLength: 32
+    AllowedPattern: "[-a-z0-9.]*"
+  OAI:
+    Description: Origin Access Identity ID. Allows access to s3 and signing.
+    Type: String
+    MinLength: 3
+    MaxLength: 32
+    AllowedPattern: "[A-Z0-9]*"
+  CertificateID:
+    Description: Identifier of a certificate stored in AWS Certificate Manager
+    Type: String
+    MinLength: 3
+    MaxLength: 42
+    AllowedPattern: "[-a-z0-9]*"
